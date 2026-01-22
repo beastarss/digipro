@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard - DigiPro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- GLOBAL STYLES --- */
+        :root {
+            --primary: #8B5CF6;
+            --primary-hover: #7C3AED;
+            --bg-dark: #0F172A;
+            --bg-sidebar: #1E293B;
+            --bg-card: #1E293B;
+            --text-light: #F8FAFC;
+            --text-gray: #94A3B8;
+            --border: #334155;
+            --success: #10B981;
+            --warning: #F59E0B;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- SIDEBAR --- */
+        aside {
+            width: 260px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 2rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .menu-list {
+            flex: 1;
+            padding: 0 1rem;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            color: var(--text-gray);
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .menu-item i { margin-right: 10px; }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            flex: 1;
+            margin-left: 260px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        /* --- TOP BAR --- */
+        .topbar {
+            height: 70px;
+            background: var(--bg-sidebar);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #EF4444;
+            color: #EF4444;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover { background: #EF4444; color: white; }
+
+        .container { padding: 2rem; }
+
+        /* --- STAT CARDS --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 { color: var(--text-gray); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+
+        /* --- CHART SECTION --- */
+        .chart-container {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .chart-header { margin-bottom: 1.5rem; }
+        .chart-header p { color: var(--text-gray); font-size: 0.9rem; }
+
+        /* --- TABLE SECTION --- */
+        .table-container {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-gray);
+            font-weight: 600;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td { padding: 1rem; border-bottom: 1px solid var(--border); }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+
+        /* --- MOBILE MENU TOGGLE --- */
+        .menu-toggle { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 992px) {
+            aside { transform: translateX(-100%); width: 240px; }
+            aside.active { transform: translateX(0); }
+            main { margin-left: 0; }
+            .menu-toggle { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside id="sidebar">
+        <div class="sidebar-header">DIGIPRO</div>
+        <nav class="menu-list">
+            <a href="#" class="menu-item active">Dashboard</a>
+            <a href="#" class="menu-item">Produk</a>
+            <a href="#" class="menu-item">Transaksi</a>
+            <a href="#" class="menu-item">Laporan</a>
+            <a href="#" class="menu-item">Pengaturan</a>
+        </nav>
+    </aside>
+
+    <main>
+        <header class="topbar">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <div style="font-weight: 600;">Ringkasan Toko</div>
+            <div class="user-profile">
+                <span>Halo, <strong>Admin Seller</strong></span>
+                <button class="logout-btn">Logout</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Penjualan</h3>
+                    <div class="value">Rp 12.450.000</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Transaksi</h3>
+                    <div class="value">142</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Produk Terjual</h3>
+                    <div class="value">89</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>Performa Penjualan</h2>
+                    <p>Statistik penjualan dalam satu minggu terakhir.</p>
+                </div>
+                <canvas id="salesChart" height="100"></canvas>
+            </div>
+
+            <div class="table-container">
+                <h2 style="margin-bottom: 1.5rem;">Transaksi Terbaru</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Produk</th>
+                            <th>Email</th>
+                            <th>Nomor HP</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#DE-1705912</td>
+                            <td>AI Prompt Pack</td>
+                            <td>budi@gmail.com</td>
+                            <td>08123456xxx</td>
+                            <td><span class="status-badge status-success">Berhasil</span></td>
+                        </tr>
+                        <tr>
+                            <td>#DE-1705915</td>
+                            <td>Video Course React</td>
+                            <td>sari@yahoo.com</td>
+                            <td>08775544xxx</td>
+                            <td><span class="status-badge status-pending">Menunggu</span></td>
+                        </tr>
+                        <tr>
+                            <td>#DE-1705920</td>
+                            <td>Mastering UI/UX</td>
+                            <td>andi@gmail.com</td>
+                            <td>08529988xxx</td>
+                            <td><span class="status-badge status-success">Berhasil</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // SIDEBAR TOGGLE FOR MOBILE
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        // 4. CHART.JS INITIALIZATION (DUMMY DATA)
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        const salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+                datasets: [{
+                    label: 'Penjualan (IDR)',
+                    data: [1200000, 1900000, 1500000, 2500000, 2200000, 3100000, 2800000],
+                    borderColor: '#8B5CF6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#8B5CF6'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94A3B8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94A3B8' }
+                    }
+                }
+            }
+        });
+
+        // Simulasi interaksi logout
+        document.querySelector('.logout-btn').addEventListener('click', () => {
+            alert('Anda telah keluar dari sistem.');
+        });
+    </script>
+</body>
+</html>
